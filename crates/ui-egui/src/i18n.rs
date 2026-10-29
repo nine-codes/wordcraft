@@ -291,8 +291,24 @@ fn detect_system_lang() -> Lang {
     if let Some(l) = std::env::var("WORDCRAFT_LANGUAGE").ok().and_then(|v| lang_from_tag(&v)) {
         return l;
     }
+    // sys-locale drops glibc's script modifier (`sr_RS@latin` → `sr-RS`), so read its variables raw.
+    #[cfg(all(unix, not(any(target_vendor = "apple", target_os = "android"))))]
+    let tags = posix_locale_tags(|k| std::env::var(k).ok());
+    #[cfg(not(all(unix, not(any(target_vendor = "apple", target_os = "android")))))]
     let tags: Vec<String> = sys_locale::get_locales().take(16).collect();
     first_supported(tags.iter().map(String::as_str)).unwrap_or(Lang::EN)
+}
+
+/// The locale variables sys-locale reads on Unix, in its order (`LANGUAGE`'s `:` list, then
+/// `LC_ALL`, `LC_MESSAGES`, `LANG`), but unconverted: a glibc script modifier picks the script
+/// (`sr_RS.UTF-8@latin` is Latin Serbian, `bs_BA.UTF-8@cyrillic` Cyrillic Bosnian).
+#[cfg_attr(not(all(unix, not(any(target_vendor = "apple", target_os = "android")))), allow(dead_code))]
+fn posix_locale_tags(var: impl Fn(&str) -> Option<String>) -> Vec<String> {
+    let mut tags: Vec<String> = var("LANGUAGE").map(|v| v.split(':').map(str::to_owned).collect()).unwrap_or_default();
+    tags.extend(["LC_ALL", "LC_MESSAGES", "LANG"].into_iter().filter_map(&var));
+    tags.retain(|t| !t.is_empty());
+    tags.truncate(16);
+    tags
 }
 
 /// The system region (#838): it picks the paper File › New starts on, the default measurement

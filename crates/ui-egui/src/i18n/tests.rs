@@ -1113,6 +1113,24 @@ fn bundled_interface_fonts_cover_slovenian_letters() {
     assert!(!lang("sl").uses_cjk());
 }
 
+/// The Unix locale variables keep glibc's script modifier, which sys-locale drops: Latin Serbian
+/// isn't shown in Cyrillic, and Cyrillic Bosnian isn't shown in Latin script.
+#[test]
+fn posix_script_modifiers_pick_the_script() {
+    needs_catalogs!();
+    let system = |vars: &[(&str, &str)]| {
+        let tags = posix_locale_tags(|k| vars.iter().find(|(name, _)| *name == k).map(|(_, v)| (*v).to_owned()));
+        first_supported(tags.iter().map(String::as_str))
+    };
+    assert_eq!(system(&[("LANG", "sr_RS.UTF-8@latin")]), Some(lang("sr-latn")));
+    assert_eq!(system(&[("LANG", "sr_RS.UTF-8")]), Some(lang("sr")));
+    assert_eq!(system(&[("LANG", "bs_BA.UTF-8")]), Some(lang("bs")));
+    assert_eq!(system(&[("LANG", "bs_BA.UTF-8@cyrillic")]), None, "Cyrillic Bosnian has no catalog");
+    // In sys-locale's order: `LANGUAGE`'s list first, then `LC_ALL`, `LC_MESSAGES`, `LANG`.
+    assert_eq!(system(&[("LANGUAGE", "bs_BA@cyrillic:hr_HR"), ("LANG", "bs_BA.UTF-8")]), Some(lang("hr")));
+    assert_eq!(system(&[("LANGUAGE", ""), ("LC_MESSAGES", "bs_BA.UTF-8"), ("LANG", "en_US.UTF-8")]), Some(lang("bs")));
+}
+
 /// Bosnian (Latin script) follows `bs-BA` system locales and a saved choice, and choosing it leaves
 /// the document as it was. Cyrillic Bosnian has no catalog: a script is never crossed.
 #[test]
