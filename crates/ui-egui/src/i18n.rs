@@ -299,16 +299,24 @@ fn detect_system_lang() -> Lang {
     first_supported(tags.iter().map(String::as_str)).unwrap_or(Lang::EN)
 }
 
-/// The locale variables sys-locale reads on Unix, in its order (`LANGUAGE`'s `:` list, then
-/// `LC_ALL`, `LC_MESSAGES`, `LANG`), but unconverted: a glibc script modifier picks the script
-/// (`sr_RS.UTF-8@latin` is Latin Serbian, `bs_BA.UTF-8@cyrillic` Cyrillic Bosnian).
+/// The interface languages the Unix locale variables ask for, as gettext reads them, unconverted
+/// so a glibc script modifier picks the script (`sr_RS.UTF-8@latin` is Latin Serbian,
+/// `bs_BA.UTF-8@cyrillic` Cyrillic Bosnian). Only one of `LC_ALL`, `LC_MESSAGES` and `LANG` is in
+/// effect, the first set: a lower one is never a fallback, so it can't cross to another script.
+/// GNU's `LANGUAGE` list, when set, replaces it, except under the `C` locale.
 #[cfg_attr(not(all(unix, not(any(target_vendor = "apple", target_os = "android")))), allow(dead_code))]
 fn posix_locale_tags(var: impl Fn(&str) -> Option<String>) -> Vec<String> {
-    let mut tags: Vec<String> = var("LANGUAGE").map(|v| v.split(':').map(str::to_owned).collect()).unwrap_or_default();
-    tags.extend(["LC_ALL", "LC_MESSAGES", "LANG"].into_iter().filter_map(&var));
-    tags.retain(|t| !t.is_empty());
-    tags.truncate(16);
-    tags
+    let set = |name| var(name).filter(|v| !v.is_empty());
+    let Some(locale) = ["LC_ALL", "LC_MESSAGES", "LANG"].into_iter().find_map(set) else {
+        return Vec::new();
+    };
+    if matches!(locale.split(['.', '@']).next(), Some("C" | "POSIX")) {
+        return vec![locale];
+    }
+    match set("LANGUAGE") {
+        Some(list) => list.split(':').filter(|t| !t.is_empty()).take(16).map(str::to_owned).collect(),
+        None => vec![locale],
+    }
 }
 
 /// The system region (#838): it picks the paper File › New starts on, the default measurement

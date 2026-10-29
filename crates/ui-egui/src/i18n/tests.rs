@@ -1114,7 +1114,9 @@ fn bundled_interface_fonts_cover_slovenian_letters() {
 }
 
 /// The Unix locale variables keep glibc's script modifier, which sys-locale drops: Latin Serbian
-/// isn't shown in Cyrillic, and Cyrillic Bosnian isn't shown in Latin script.
+/// isn't shown in Cyrillic, and Cyrillic Bosnian isn't shown in Latin script. They are read as
+/// gettext reads them: one of `LC_ALL`, `LC_MESSAGES`, `LANG` is in effect, and `LANGUAGE`
+/// replaces it.
 #[test]
 fn posix_script_modifiers_pick_the_script() {
     needs_catalogs!();
@@ -1126,9 +1128,17 @@ fn posix_script_modifiers_pick_the_script() {
     assert_eq!(system(&[("LANG", "sr_RS.UTF-8")]), Some(lang("sr")));
     assert_eq!(system(&[("LANG", "bs_BA.UTF-8")]), Some(lang("bs")));
     assert_eq!(system(&[("LANG", "bs_BA.UTF-8@cyrillic")]), None, "Cyrillic Bosnian has no catalog");
-    // In sys-locale's order: `LANGUAGE`'s list first, then `LC_ALL`, `LC_MESSAGES`, `LANG`.
+    // A lower variable is overridden, not a fallback: no crossing into Latin script.
+    assert_eq!(system(&[("LC_ALL", "bs_BA@cyrillic"), ("LANG", "bs_BA.UTF-8")]), None);
+    assert_eq!(system(&[("LC_MESSAGES", "bs_BA@cyrillic"), ("LANG", "bs_BA.UTF-8")]), None);
+    assert_eq!(system(&[("LC_MESSAGES", "bs_BA.UTF-8"), ("LANG", "en_US.UTF-8")]), Some(lang("bs")));
+    // `LANGUAGE` is an ordered list that replaces the locale, and an empty one is unset.
     assert_eq!(system(&[("LANGUAGE", "bs_BA@cyrillic:hr_HR"), ("LANG", "bs_BA.UTF-8")]), Some(lang("hr")));
-    assert_eq!(system(&[("LANGUAGE", ""), ("LC_MESSAGES", "bs_BA.UTF-8"), ("LANG", "en_US.UTF-8")]), Some(lang("bs")));
+    assert_eq!(system(&[("LANGUAGE", "bs_BA@cyrillic"), ("LANG", "bs_BA.UTF-8")]), None);
+    assert_eq!(system(&[("LANGUAGE", ""), ("LANG", "bs_BA.UTF-8")]), Some(lang("bs")));
+    // The `C` locale ignores `LANGUAGE` (English), and no variable at all asks for nothing.
+    assert_eq!(system(&[("LANGUAGE", "bs_BA"), ("LC_ALL", "C.UTF-8")]), Some(Lang::EN));
+    assert_eq!(system(&[("LANGUAGE", "bs_BA")]), None);
 }
 
 /// Bosnian (Latin script) follows `bs-BA` system locales and a saved choice, and choosing it leaves
