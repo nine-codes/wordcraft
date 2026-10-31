@@ -9,8 +9,8 @@ screenshot or a launch while the preference is `auto`. Document text, command id
 responses and file paths do not change.
 
 The catalog is craft-i18n's `locales/bs/wordcraft.tsv` (storytold/craft-i18n, 2,508 entries) over the
-shared `locales/bs/common.tsv`. Bosnian shows once `craft-i18n.rev` points at a craft-i18n commit
-that has them; until then it isn't offered, like any language without an embedded catalog. The
+shared `locales/bs/common.tsv`. Both are embedded from the
+craft-i18n commit pinned in `craft-i18n.rev` (0722485…), which includes them. The
 catalog is written from the meaning of the English labels; no proprietary translation resources were
 consulted. It is an AI-assisted draft that a native speaker has not yet reviewed.
 

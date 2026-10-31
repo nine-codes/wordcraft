@@ -140,7 +140,7 @@ Ranked, to beta (detail and remaining milestones in [docs/roadmap.md](docs/roadm
 
 ## Progress log
 
-- 2026-10-29: Bosnian (`bs`, Latin script) interface language: File › Options › Interface language › Bosanski, `bs-BA` and `bs_BA.UTF-8` system locales and a saved language choice. The catalog lives in storytold/craft-i18n (`locales/bs/wordcraft.tsv`, 2,508 entries, plus the shared `common.tsv`) and shows once `craft-i18n.rev` moves to a commit that has it; until then the language is not offered. Locale, saved-preference and bundled-font tests; no Bosnian proofing.
+- 2026-10-29: Bosnian (`bs`, Latin script) interface language: File › Options › Interface language › Bosanski, `bs-BA` and `bs_BA.UTF-8` system locales and a saved language choice. The catalog lives in storytold/craft-i18n (`locales/bs/wordcraft.tsv`, 2,508 entries, plus the shared `common.tsv`) embedded from the `craft-i18n.rev` pin (0722485…), which now includes it. Locale, saved-preference and bundled-font tests; no Bosnian proofing.
 - 2026-10-31: DOCX: a paragraph naming a style the file doesn't define is formatted as Normal, as in Word, not with the document defaults alone, so a Pandoc footer naming an undefined `Footer` style is as tall as Word's and no longer pushes the last paragraph to the next page (#5077). Readiness unchanged.
 - 2026-10-31: A table of contents writes its page numbers as `PAGEREF` fields to the headings' bookmarks, as Word does, so updating the fields in Word moves the numbers with the headings; they were plain text (#5097).
 - 2026-10-31: Keytips reach the Backstage: Alt, F badges its pages with Word's letters, and Alt, F, P (or V) opens Print (#4960).
