@@ -1196,6 +1196,31 @@ fn bosnian_locales_and_saved_preference_work_without_changing_the_document() {
     assert!(!bs.uses_cjk());
 }
 
+/// Bosnian counts take CLDR's three forms through the embedded catalog: `one` for 1, 21, 101 (not
+/// 11), `few` for 2–4, 22–24 (not 12–14) and `other` for the rest.
+#[test]
+fn bosnian_plurals_take_one_few_other() {
+    needs_catalogs!();
+    let bs = lang("bs");
+    let count = |n| I18N.trn_plain(bs.lang, n, "{n} item", "{n} items");
+    for (n, want) in [
+        (1, "1 stavka"),
+        (21, "21 stavka"),
+        (101, "101 stavka"),
+        (2, "2 stavke"),
+        (4, "4 stavke"),
+        (22, "22 stavke"),
+        (0, "0 stavki"),
+        (5, "5 stavki"),
+        (11, "11 stavki"),
+        (12, "12 stavki"),
+        (14, "14 stavki"),
+        (111, "111 stavki"),
+    ] {
+        assert_eq!(count(n), want, "{n}");
+    }
+}
+
 /// The bundled interface faces draw every Bosnian letter (č ć đ š ž), every other accented letter
 /// the catalog uses, and its punctuation, without a system fallback.
 #[test]
